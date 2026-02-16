@@ -1,0 +1,128 @@
+/**
+ * Core Philosophy: This ruleset enforces a strict user-ownership security model.
+ * All user-generated content, such as tasks and daily sparks, is private and
+ * can only be accessed by the user who created it. There is no concept of
+ * public data or cross-user data sharing.
+ *
+ * Data Structure: The data is organized hierarchically. All user-specific
+ * data (Tasks, DailySparks) is nested within a user's document in the top-level
+ * 'users' collection (e.g., /users/{userId}/tasks/{taskId}). This structure
+ * simplifies ownership-based security rules.
+ *
+ * Key Security Decisions:
+ * - User Isolation: A user can only read or write data within their own
+ *   document tree (i.e., paths starting with /users/{their_own_uid}).
+ * - No User Listing: It is not possible for any client, authenticated or not,
+ *   to list all documents in the top-level 'users' collection.
+ * - Default Deny: Any operation not explicitly granted is denied.
+ *
+ * Denormalization for Authorization: To ensure performant and secure authorization,
+ * documents in user subcollections (like 'tasks' and 'dailySparks') are expected
+ * to contain a denormalized `ownerId` field. This field must match the user's
+ * UID. This avoids slow and costly `get()` calls in security rules, making
+ * access checks atomic and efficient.
+ *
+ * Structural Segregation: User data is naturally segregated into separate
+ * subcollections (/tasks, /dailySparks). This ensures that all documents within a
+ * given collection share the same security profile, which simplifies query
+ * security (`list` operations).
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --------------------------------------------------------------------
+    // Helper Functions
+    // --------------------------------------------------------------------
+
+    /**
+     * Checks if the user is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * Checks if the currently authenticated user's UID matches the provided userId.
+     * This is the foundation of the ownership model.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * Checks for ownership on an existing document. Used for update and delete
+     * operations to prevent acting on documents that don't exist.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * On create, validates that the new document contains a denormalized `ownerId`
+     * field that correctly matches the parent document's userId.
+     * This enforces relational integrity from the client.
+     */
+    function hasValidOwnerOnCreate(userId) {
+      return request.resource.data.ownerId == userId;
+    }
+
+    /**
+     * On update, ensures the denormalized `ownerId` field cannot be changed.
+     * This prevents re-assigning a document to a different owner.
+     */
+    function isOwnerImmutable() {
+      return request.resource.data.ownerId == resource.data.ownerId;
+    }
+
+
+    // --------------------------------------------------------------------
+    // Collection Rules
+    // --------------------------------------------------------------------
+
+    /**
+     * @description Controls access to a user's root profile document.
+     * @path /users/{userId}
+     * @allow (create) An authenticated user can create their own profile document.
+     * @deny (list) No user can list all user profile documents.
+     * @principle Restricts access to a user's own data tree and prevents user enumeration.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Secures a user's private collection of tasks.
+     * @path /users/{userId}/tasks/{taskId}
+     * @allow (create) The owner of the user path can create a task in their own collection, provided they set the 'ownerId' field correctly.
+     * @deny (get) An authenticated user cannot read a task from another user's collection.
+     * @principle Enforces document ownership and validates relational integrity via a denormalized `ownerId` field.
+     */
+    match /users/{userId}/tasks/{taskId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && hasValidOwnerOnCreate(userId);
+      allow update: if isExistingOwner(userId) && isOwnerImmutable();
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Secures a user's private collection of daily sparks.
+     * @path /users/{userId}/dailySparks/{sparkId}
+     * @allow (list) The owner of the user path can list all daily sparks in their own collection.
+     * @deny (update) An authenticated user cannot update a daily spark in another user's collection.
+     * @principle Enforces document ownership and validates relational integrity via a denormalized `ownerId` field.
+     */
+    match /users/{userId}/dailySparks/{sparkId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && hasValidOwnerOnCreate(userId);
+      allow update: if isExistingOwner(userId) && isOwnerImmutable();
+      allow delete: if isExistingOwner(userId);
+    }
+  }
+}
