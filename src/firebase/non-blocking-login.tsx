@@ -4,26 +4,42 @@ import {
   signInAnonymously,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  // Assume getAuth and app are initialized elsewhere
+  FirebaseError,
 } from 'firebase/auth';
 
+const defaultOnError = (error: FirebaseError) => {
+  // For debugging, you can log the error. In production, you might
+  // want to send this to an error tracking service.
+  console.error(`Authentication Error (${error.code}): ${error.message}`);
+};
+
 /** Initiate anonymous sign-in (non-blocking). */
-export function initiateAnonymousSignIn(authInstance: Auth): void {
+export function initiateAnonymousSignIn(authInstance: Auth, onError: (error: FirebaseError) => void = defaultOnError): void {
   // CRITICAL: Call signInAnonymously directly. Do NOT use 'await signInAnonymously(...)'.
-  signInAnonymously(authInstance);
+  signInAnonymously(authInstance).catch(onError);
   // Code continues immediately. Auth state change is handled by onAuthStateChanged listener.
 }
 
 /** Initiate email/password sign-up (non-blocking). */
-export function initiateEmailSignUp(authInstance: Auth, email: string, password: string): void {
+export function initiateEmailSignUp(
+  authInstance: Auth,
+  email: string,
+  password: string,
+  onError: (error: FirebaseError) => void = defaultOnError
+): void {
   // CRITICAL: Call createUserWithEmailAndPassword directly. Do NOT use 'await createUserWithEmailAndPassword(...)'.
-  createUserWithEmailAndPassword(authInstance, email, password);
+  createUserWithEmailAndPassword(authInstance, email, password).catch(onError);
   // Code continues immediately. Auth state change is handled by onAuthStateChanged listener.
 }
 
 /** Initiate email/password sign-in (non-blocking). */
-export function initiateEmailSignIn(authInstance: Auth, email: string, password: string): void {
+export function initiateEmailSignIn(
+  authInstance: Auth,
+  email: string,
+  password: string,
+  onError: (error: FirebaseError) => void = defaultOnError
+): void {
   // CRITICAL: Call signInWithEmailAndPassword directly. Do NOT use 'await signInWithEmailAndPassword(...)'.
-  signInWithEmailAndPassword(authInstance, email, password);
+  signInWithEmailAndPassword(authInstance, email, password).catch(onError);
   // Code continues immediately. Auth state change is handled by onAuthStateChanged listener.
 }

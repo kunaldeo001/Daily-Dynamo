@@ -12,24 +12,52 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
+import { FirebaseError } from 'firebase/auth';
 
 export function AuthForm() {
   const auth = useAuth();
+  const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
+  const getAuthErrorMessage = (errorCode: string): string => {
+    switch (errorCode) {
+      case 'auth/invalid-credential':
+        return 'Invalid credentials. Please check your email and password and try again.';
+      case 'auth/email-already-in-use':
+        return 'This email is already in use by another account.';
+      case 'auth/weak-password':
+        return 'The password is too weak. Please use a stronger password.';
+      case 'auth/user-not-found':
+        return 'No account found with this email address.';
+      case 'auth/wrong-password':
+        return 'Incorrect password. Please try again.';
+      default:
+        return 'An unexpected error occurred. Please try again.';
+    }
+  };
+
+  const handleAuthError = (error: FirebaseError) => {
+    toast({
+      variant: 'destructive',
+      title: 'Authentication Failed',
+      description: getAuthErrorMessage(error.code),
+    });
+  };
+
   const handleSignUp = (e: React.FormEvent) => {
     e.preventDefault();
-    initiateEmailSignUp(auth, email, password);
+    initiateEmailSignUp(auth, email, password, handleAuthError);
   };
 
   const handleSignIn = (e: React.FormEvent) => {
     e.preventDefault();
-    initiateEmailSignIn(auth, email, password);
+    initiateEmailSignIn(auth, email, password, handleAuthError);
   };
 
   const handleAnonymousSignIn = () => {
-    initiateAnonymousSignIn(auth);
+    initiateAnonymousSignIn(auth, handleAuthError);
   };
 
   return (
