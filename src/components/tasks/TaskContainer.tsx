@@ -22,6 +22,24 @@ export function TaskContainer() {
 
   const { data: tasks, isLoading: areTasksLoading } = useCollection<Task>(tasksCollection);
 
+  const sortedTasks = useMemo(() => {
+    if (!tasks) return [];
+    return [...tasks].sort((a, b) => {
+      if (a.isCompleted !== b.isCompleted) {
+        return a.isCompleted ? 1 : -1;
+      }
+      const aSeconds = a.createdAt?.seconds;
+      const bSeconds = b.createdAt?.seconds;
+
+      if (aSeconds && bSeconds) {
+        return bSeconds - aSeconds;
+      }
+      if (aSeconds) return -1;
+      if (bSeconds) return 1;
+      return 0;
+    });
+  }, [tasks]);
+
   const handleAddTask = (title: string) => {
     if (title.trim() === '' || !tasksCollection || !user) return;
     const newTask = {
@@ -64,20 +82,6 @@ export function TaskContainer() {
         </Card>
     );
   }
-
-  const sortedTasks = useMemo(() => {
-    if (!tasks) return [];
-    return [...tasks].sort((a, b) => {
-      if (a.isCompleted !== b.isCompleted) {
-        return a.isCompleted ? 1 : -1;
-      }
-      if (a.createdAt && b.createdAt) {
-        return b.createdAt.seconds - a.createdAt.seconds;
-      }
-      return 0;
-    });
-  }, [tasks]);
-
 
   return (
     <Card className="w-full max-w-2xl mx-auto shadow-lg bg-card/80 backdrop-blur-sm border-primary/20 animate-in fade-in slide-in-from-top-12 duration-500 delay-200">
