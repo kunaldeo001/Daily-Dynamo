@@ -63,12 +63,17 @@
           "type": "string",
           "format": "date-time",
           "description": "Timestamp indicating when the daily spark was generated."
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "The UID of the user who owns this daily spark."
         }
       },
       "required": [
         "sparkDate",
         "content",
-        "createdAt"
+        "createdAt",
+        "ownerId"
       ]
     }
   },
