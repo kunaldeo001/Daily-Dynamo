@@ -1,63 +1,53 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { AddTaskForm } from './AddTaskForm';
 import { TaskList } from './TaskList';
 import type { Task } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ListTodo } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-
-const TASKS_STORAGE_KEY = 'daily-dynamo-tasks';
+import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, doc, serverTimestamp } from 'firebase/firestore';
+import { addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 export function TaskContainer() {
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [isMounted, setIsMounted] = useState(false);
+  const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
 
-  useEffect(() => {
-    try {
-      const storedTasks = localStorage.getItem(TASKS_STORAGE_KEY);
-      if (storedTasks) {
-        setTasks(JSON.parse(storedTasks));
-      }
-    } catch (error) {
-      console.error("Failed to load tasks from localStorage", error);
-    }
-    setIsMounted(true);
-  }, []);
+  const tasksCollection = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return collection(firestore, `users/${user.uid}/tasks`);
+  }, [firestore, user]);
 
-  useEffect(() => {
-    if (isMounted) {
-      try {
-        localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(tasks));
-      } catch (error) {
-        console.error("Failed to save tasks to localStorage", error);
-      }
-    }
-  }, [tasks, isMounted]);
+  const { data: tasks, isLoading: areTasksLoading } = useCollection<Task>(tasksCollection);
 
-  const handleAddTask = (text: string) => {
-    if (text.trim() === '') return;
-    const newTask: Task = {
-      id: crypto.randomUUID(),
-      text,
-      completed: false,
-      createdAt: Date.now(),
+  const handleAddTask = (title: string) => {
+    if (title.trim() === '' || !tasksCollection || !user) return;
+    const newTask = {
+      title,
+      isCompleted: false,
+      createdAt: serverTimestamp(),
+      ownerId: user.uid,
     };
-    setTasks(prevTasks => [newTask, ...prevTasks]);
+    addDocumentNonBlocking(tasksCollection, newTask);
   };
 
   const handleToggleTask = (id: string) => {
-    setTasks(tasks.map(task => 
-      task.id === id ? { ...task, completed: !task.completed } : task
-    ));
+    if (!firestore || !user) return;
+    const task = tasks?.find(t => t.id === id);
+    if (!task) return;
+    const taskRef = doc(firestore, `users/${user.uid}/tasks/${id}`);
+    updateDocumentNonBlocking(taskRef, { isCompleted: !task.isCompleted });
   };
 
   const handleDeleteTask = (id: string) => {
-    setTasks(tasks.filter(task => task.id !== id));
+    if (!firestore || !user) return;
+    const taskRef = doc(firestore, `users/${user.uid}/tasks/${id}`);
+    deleteDocumentNonBlocking(taskRef);
   };
   
-  if (!isMounted) {
+  if (isUserLoading || (user && areTasksLoading)) {
     return (
         <Card className="w-full max-w-2xl mx-auto shadow-lg">
             <CardHeader>
@@ -75,12 +65,19 @@ export function TaskContainer() {
     );
   }
 
-  const sortedTasks = [...tasks].sort((a, b) => {
-    if (a.completed !== b.completed) {
-      return a.completed ? 1 : -1;
-    }
-    return b.createdAt - a.createdAt;
-  });
+  const sortedTasks = useMemo(() => {
+    if (!tasks) return [];
+    return [...tasks].sort((a, b) => {
+      if (a.isCompleted !== b.isCompleted) {
+        return a.isCompleted ? 1 : -1;
+      }
+      if (a.createdAt && b.createdAt) {
+        return b.createdAt.seconds - a.createdAt.seconds;
+      }
+      return 0;
+    });
+  }, [tasks]);
+
 
   return (
     <Card className="w-full max-w-2xl mx-auto shadow-lg bg-card/80 backdrop-blur-sm border-primary/20 animate-in fade-in slide-in-from-top-12 duration-500 delay-200">

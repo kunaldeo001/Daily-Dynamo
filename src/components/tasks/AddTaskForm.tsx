@@ -6,24 +6,25 @@ import { Input } from '@/components/ui/input';
 import { Plus } from 'lucide-react';
 
 interface AddTaskFormProps {
-  onAddTask: (text: string) => void;
+  onAddTask: (title: string) => void;
 }
 
 export function AddTaskForm({ onAddTask }: AddTaskFormProps) {
-  const [text, setText] = useState('');
+  const [title, setTitle] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onAddTask(text);
-    setText('');
+    if (title.trim() === '') return;
+    onAddTask(title);
+    setTitle('');
   };
 
   return (
     <form onSubmit={handleSubmit} className="flex gap-2">
       <Input
         type="text"
-        value={text}
-        onChange={(e) => setText(e.target.value)}
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
         placeholder="Add a new task... e.g., Conquer the world"
         className="flex-grow focus-visible:ring-accent"
         aria-label="New task"
