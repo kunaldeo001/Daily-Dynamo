@@ -7,6 +7,8 @@ export interface Task {
   isCompleted: boolean;
   category: TaskCategory;
   createdAt: any;
+  ownerId: string;
+  breakdown?: string; // AI generated breakdown steps
 }
 
 export interface DailySparkData {
@@ -14,4 +16,6 @@ export interface DailySparkData {
   content: string;
   sparkDate: string;
   createdAt: any;
+  ownerId: string;
+  mood?: string;
 }
