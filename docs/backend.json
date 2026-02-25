@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "UserProfile": {
@@ -28,6 +29,11 @@
           "type": "boolean",
           "description": "Indicates whether the task has been marked as completed."
         },
+        "category": {
+          "type": "string",
+          "enum": ["Productive", "Self-Care", "Whimsical"],
+          "description": "The category of the task to help organize into columns."
+        },
         "createdAt": {
           "type": "string",
           "format": "date-time",
@@ -41,6 +47,7 @@
       "required": [
         "title",
         "isCompleted",
+        "category",
         "createdAt",
         "ownerId"
       ]

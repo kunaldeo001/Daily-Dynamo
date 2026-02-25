@@ -1,7 +1,11 @@
+
+export type TaskCategory = 'Productive' | 'Self-Care' | 'Whimsical';
+
 export interface Task {
   id: string;
   title: string;
   isCompleted: boolean;
+  category: TaskCategory;
   createdAt: any;
 }
 

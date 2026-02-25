@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Sparkles, LoaderCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,8 +14,14 @@ import { format } from 'date-fns';
 
 export function DailySpark() {
   const [isGenerating, setIsGenerating] = useState(false);
+  const [todayStr, setTodayStr] = useState<string | null>(null);
   const { user } = useUser();
   const firestore = useFirestore();
+
+  useEffect(() => {
+    // Avoid hydration mismatch by setting date client-side
+    setTodayStr(format(new Date(), 'yyyy-MM-dd'));
+  }, []);
 
   const sparksCollection = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -24,41 +31,29 @@ export function DailySpark() {
   const { data: sparks, isLoading: areSparksLoading } = useCollection<DailySparkData>(sparksCollection);
 
   const todaySpark = useMemo(() => {
-    if (!sparks) return null;
-    const today = format(new Date(), 'yyyy-MM-dd');
+    if (!sparks || !todayStr) return null;
     const todaySparks = sparks
-      .filter(s => s.sparkDate === today)
-      .sort((a, b) => {
-        const aSeconds = a.createdAt?.seconds;
-        const bSeconds = b.createdAt?.seconds;
-
-        if (aSeconds && bSeconds) {
-          return bSeconds - aSeconds;
-        }
-        if (aSeconds) return -1;
-        if (bSeconds) return 1;
-        return 0;
-      });
+      .filter(s => s.sparkDate === todayStr)
+      .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
     return todaySparks[0] || null;
-  }, [sparks]);
+  }, [sparks, todayStr]);
 
 
   const handleGenerateSpark = async () => {
-    if (!sparksCollection || !user) return;
+    if (!sparksCollection || !user || !todayStr) return;
     setIsGenerating(true);
 
     try {
       const result = await aiDailySpark();
       const newSpark = {
         content: result.suggestion,
-        sparkDate: format(new Date(), 'yyyy-MM-dd'),
+        sparkDate: todayStr,
         createdAt: serverTimestamp(),
         ownerId: user.uid,
       };
       addDocumentNonBlocking(sparksCollection, newSpark);
     } catch (error) {
       console.error('Failed to generate daily spark:', error);
-      // You could add a toast notification here to inform the user about the error.
     } finally {
       setIsGenerating(false);
     }
@@ -67,17 +62,17 @@ export function DailySpark() {
   const isLoading = isGenerating || areSparksLoading;
 
   return (
-    <Card className="w-full max-w-2xl mx-auto shadow-lg bg-card/80 backdrop-blur-sm border-primary/20 animate-in fade-in slide-in-from-top-8 duration-500 delay-100">
+    <Card className="w-full shadow-lg bg-card/80 backdrop-blur-sm border-primary/20 animate-in fade-in slide-in-from-top-8 duration-500 delay-100">
       <CardHeader className="flex-row items-center justify-between">
         <div className="flex items-center gap-2">
             <Sparkles className="text-primary" />
-            <CardTitle className="font-headline">
+            <CardTitle className="font-headline text-xl">
             AI Daily Spark
             </CardTitle>
         </div>
-        <Button onClick={handleGenerateSpark} disabled={isLoading} size="sm">
+        <Button onClick={handleGenerateSpark} disabled={isLoading} size="sm" variant="outline" className="border-primary/50 text-primary hover:bg-primary/10">
           {isLoading ? (
-            <LoaderCircle className="animate-spin" />
+            <LoaderCircle className="animate-spin h-4 w-4" />
           ) : (
             <Sparkles className="mr-2 size-4" />
           )}
@@ -85,14 +80,14 @@ export function DailySpark() {
         </Button>
       </CardHeader>
       <CardContent>
-        <div className="text-center text-lg min-h-[5rem] flex items-center justify-center p-4 rounded-lg bg-background">
-          {isLoading && <LoaderCircle className="animate-spin text-primary" />}
-          {!isLoading && todaySpark && (
-            <p className="animate-in fade-in-50 duration-500">{todaySpark.content}</p>
-          )}
-          {!isLoading && !todaySpark && (
-            <p className="text-muted-foreground">
-              Click "New Spark" for a quirky daily challenge!
+        <div className="text-center text-lg min-h-[5rem] flex items-center justify-center p-6 rounded-xl bg-primary/5 border border-primary/10 italic font-medium text-primary-foreground/90">
+          {isLoading ? (
+            <LoaderCircle className="animate-spin text-primary" />
+          ) : todaySpark ? (
+            <p className="animate-in zoom-in-95 duration-500">"{todaySpark.content}"</p>
+          ) : (
+            <p className="text-muted-foreground font-normal not-italic">
+              Ready for your daily challenge? Click above!
             </p>
           )}
         </div>
