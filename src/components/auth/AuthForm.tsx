@@ -19,7 +19,7 @@ export function AuthForm() {
   const auth = useAuth();
   const { toast } = useToast();
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [password, setPassword] = useState('1234');
 
   const getAuthErrorMessage = (errorCode: string): string => {
     switch (errorCode) {
