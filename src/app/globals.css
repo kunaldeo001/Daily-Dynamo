@@ -28,7 +28,7 @@
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
+    --radius: 0.75rem;
   }
 
   .dark {
@@ -67,5 +67,29 @@
     @apply bg-background text-foreground;
      background-image: radial-gradient(circle at top left, hsl(var(--primary) / 0.05), transparent 40%),
                     radial-gradient(circle at bottom right, hsl(var(--accent) / 0.05), transparent 40%);
+  }
+}
+
+@layer utilities {
+  .animate-sparkle {
+    animation: sparkle 2s infinite ease-in-out;
+  }
+  
+  @keyframes sparkle {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.05); }
+  }
+
+  .mood-glow-motivated {
+    box-shadow: 0 0 20px -5px hsl(45 100% 50% / 0.3);
+  }
+  .mood-glow-happy {
+    box-shadow: 0 0 20px -5px hsl(142 70% 50% / 0.3);
+  }
+  .mood-glow-meh {
+    box-shadow: 0 0 20px -5px hsl(217 90% 60% / 0.3);
+  }
+  .mood-glow-tired {
+    box-shadow: 0 0 20px -5px hsl(270 70% 60% / 0.3);
   }
 }

@@ -14,10 +14,10 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 const MOODS = [
-  { id: 'motivated', icon: Zap, color: 'text-yellow-500', label: 'Motivated' },
-  { id: 'happy', icon: Smile, color: 'text-green-500', label: 'Happy' },
-  { id: 'meh', icon: Meh, color: 'text-blue-400', label: 'Meh' },
-  { id: 'tired', icon: Frown, color: 'text-purple-400', label: 'Tired' },
+  { id: 'motivated', icon: Zap, color: 'text-yellow-500', glow: 'mood-glow-motivated', bg: 'bg-yellow-500/5', label: 'Motivated' },
+  { id: 'happy', icon: Smile, color: 'text-green-500', glow: 'mood-glow-happy', bg: 'bg-green-500/5', label: 'Happy' },
+  { id: 'meh', icon: Meh, color: 'text-blue-400', glow: 'mood-glow-meh', bg: 'bg-blue-400/5', label: 'Meh' },
+  { id: 'tired', icon: Frown, color: 'text-purple-400', glow: 'mood-glow-tired', bg: 'bg-purple-400/5', label: 'Tired' },
 ];
 
 export function DailySpark() {
@@ -69,12 +69,16 @@ export function DailySpark() {
   };
   
   const isLoading = isGenerating || areSparksLoading;
+  const currentMoodInfo = MOODS.find(m => m.id === (todaySpark?.mood || selectedMood));
 
   return (
-    <Card className="w-full shadow-lg bg-card/80 backdrop-blur-sm border-primary/20 animate-in fade-in slide-in-from-top-8 duration-500">
+    <Card className={cn(
+      "w-full shadow-lg transition-all duration-700 bg-card/80 backdrop-blur-sm border-primary/20 animate-in fade-in slide-in-from-top-8",
+      currentMoodInfo?.glow
+    )}>
       <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-2">
-            <Sparkles className="text-primary" />
+            <Sparkles className={cn("transition-colors duration-500", currentMoodInfo?.color || "text-primary")} />
             <CardTitle className="font-headline text-xl">
             AI Daily Spark
             </CardTitle>
@@ -88,7 +92,7 @@ export function DailySpark() {
               onClick={() => setSelectedMood(m.id)}
               className={cn(
                 "p-2 h-9 w-9 rounded-full transition-all",
-                selectedMood === m.id ? "bg-primary/20 scale-110" : "opacity-50 hover:opacity-100"
+                (selectedMood === m.id || todaySpark?.mood === m.id) ? "bg-muted scale-110" : "opacity-50 hover:opacity-100"
               )}
               title={m.label}
             >
@@ -100,7 +104,7 @@ export function DailySpark() {
             disabled={isLoading} 
             size="sm" 
             variant="default" 
-            className="bg-primary hover:bg-primary/90 ml-2"
+            className="bg-primary hover:bg-primary/90 ml-2 shadow-sm"
           >
             {isLoading ? (
               <LoaderCircle className="animate-spin h-4 w-4" />
@@ -112,16 +116,20 @@ export function DailySpark() {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="text-center text-lg min-h-[6rem] flex flex-col items-center justify-center p-6 rounded-xl bg-primary/5 border border-primary/10 relative overflow-hidden">
+        <div className={cn(
+          "text-center text-lg min-h-[6rem] flex flex-col items-center justify-center p-6 rounded-xl border transition-colors duration-500 relative overflow-hidden",
+          currentMoodInfo?.bg || "bg-primary/5",
+          currentMoodInfo ? `border-${currentMoodInfo.color.split('-')[1]}/20` : "border-primary/10"
+        )}>
           {isLoading ? (
             <LoaderCircle className="animate-spin text-primary size-8" />
           ) : todaySpark ? (
             <div className="animate-in zoom-in-95 duration-500 space-y-2">
-              <p className="italic font-medium text-primary-foreground/90 leading-relaxed text-xl">
+              <p className="italic font-medium leading-relaxed text-xl text-foreground">
                 "{todaySpark.content}"
               </p>
               {todaySpark.mood && (
-                <div className="text-xs uppercase tracking-tighter text-primary/60 font-bold">
+                <div className={cn("text-[10px] uppercase tracking-[0.2em] font-bold", currentMoodInfo?.color || "text-primary/60")}>
                   Tailored for your {todaySpark.mood} vibe
                 </div>
               )}

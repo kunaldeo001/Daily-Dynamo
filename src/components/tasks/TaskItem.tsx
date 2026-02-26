@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { Task } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import { Trash2, Sparkles, LoaderCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Trash2, Sparkles, LoaderCircle, Zap, CheckCircle2 } from 'lucide-react';
 import { useState } from 'react';
 import { breakdownTask } from '@/ai/flows/breakdown-task-flow';
 import { useFirestore, useUser } from '@/firebase';
@@ -45,6 +45,13 @@ export function TaskItem({ task, onToggle, onDelete }: TaskItemProps) {
     }
   };
 
+  const handleToggleWhimsy = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user || !firestore) return;
+    const taskRef = doc(firestore, `users/${user.uid}/tasks/${task.id}`);
+    updateDocumentNonBlocking(taskRef, { isWhimsical: !task.isWhimsical });
+  };
+
   const handleDelete = () => {
     setIsDeleting(true);
     setTimeout(() => {
@@ -56,10 +63,12 @@ export function TaskItem({ task, onToggle, onDelete }: TaskItemProps) {
     <div className="space-y-2">
       <li
         className={cn(
-          'group flex items-center gap-3 p-3 rounded-xl bg-card border border-border/50 transition-all duration-300 animate-in fade-in slide-in-from-top-2 hover:shadow-md hover:border-primary/20',
+          'group flex items-center gap-3 p-3 rounded-xl bg-card border border-border/50 transition-all duration-300 animate-in fade-in slide-in-from-top-2 hover:shadow-md',
+          task.isWhimsical && "bg-gradient-to-r from-card to-accent/5 border-accent/30",
           {
             'opacity-60 grayscale-[0.5]': task.isCompleted,
             'animate-out fade-out slide-out-to-left-4': isDeleting,
+            'hover:border-primary/20': !task.isWhimsical,
           }
         )}
       >
@@ -67,22 +76,32 @@ export function TaskItem({ task, onToggle, onDelete }: TaskItemProps) {
           id={`task-${task.id}`}
           checked={task.isCompleted}
           onCheckedChange={() => onToggle(task.id)}
-          className="size-5 rounded-full data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+          className="size-5 rounded-full data-[state=checked]:bg-primary data-[state=checked]:border-primary transition-transform duration-300 data-[state=checked]:scale-110"
           aria-label={`Mark task as ${task.isCompleted ? 'incomplete' : 'complete'}`}
         />
         <label
           htmlFor={`task-${task.id}`}
           className={cn(
-            'flex-grow text-sm font-medium transition-all duration-300 cursor-pointer',
+            'flex-grow text-sm font-medium transition-all duration-300 cursor-pointer select-none',
             {
               'line-through text-muted-foreground': task.isCompleted,
-            }
+            },
+            task.isWhimsical && !task.isCompleted && "text-accent italic"
           )}
         >
           {task.title}
         </label>
         
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleToggleWhimsy}
+            className={cn("size-8 rounded-full transition-colors", task.isWhimsical ? "text-accent bg-accent/10" : "text-muted-foreground hover:bg-accent/10")}
+            title="Toggle Whimsy"
+          >
+            <Zap className={cn("size-4", task.isWhimsical && "fill-accent")} />
+          </Button>
           <Button
             variant="ghost"
             size="icon"
@@ -106,21 +125,20 @@ export function TaskItem({ task, onToggle, onDelete }: TaskItemProps) {
       </li>
       
       {showBreakdown && task.breakdown && (
-        <div className="ml-8 p-3 bg-primary/5 rounded-lg border border-primary/10 text-xs text-primary-foreground/80 space-y-2 animate-in slide-in-from-top-2 duration-300">
-          <div className="font-bold flex items-center gap-1 text-[10px] uppercase tracking-widest text-primary/60">
-            <Zap className="size-3" /> Wizard's Plan
+        <div className="ml-8 p-3 bg-primary/5 rounded-lg border border-primary/10 text-xs text-primary-foreground/80 space-y-3 animate-in slide-in-from-top-2 duration-300 shadow-inner">
+          <div className="font-bold flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-primary/60">
+            <Zap className="size-3 fill-primary/30" /> Wizard's Plan
           </div>
-          <ul className="list-disc list-inside space-y-1">
+          <div className="space-y-2">
             {task.breakdown.split('\n').map((step, i) => (
-              <li key={i} className="leading-tight">{step}</li>
+              <div key={i} className="flex items-start gap-2 group/step">
+                <CheckCircle2 className="size-3 mt-0.5 text-primary/40 group-hover/step:text-primary transition-colors" />
+                <span className="leading-tight flex-1">{step}</span>
+              </div>
             ))}
-          </ul>
+          </div>
         </div>
       )}
     </div>
   );
 }
-
-const Zap = ({ className }: { className?: string }) => (
-  <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 14.71 13 4.5l-2 8.5 9-1.21-12 10.21 2-8.5-10 1.21Z"/></svg>
-);

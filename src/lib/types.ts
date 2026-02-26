@@ -9,6 +9,7 @@ export interface Task {
   createdAt: any;
   ownerId: string;
   breakdown?: string; // AI generated breakdown steps
+  isWhimsical?: boolean; // Toggle for extra flair
 }
 
 export interface DailySparkData {
