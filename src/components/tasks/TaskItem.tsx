@@ -2,7 +2,7 @@
 'use client';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import type { Task } from '@/lib/types';
+import type { Task, TaskPriority } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { Trash2, Sparkles, LoaderCircle, Zap, CheckCircle2 } from 'lucide-react';
 import { useState } from 'react';
@@ -10,6 +10,7 @@ import { breakdownTask } from '@/ai/flows/breakdown-task-flow';
 import { useFirestore, useUser } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { Badge } from '@/components/ui/badge';
 
 interface TaskItemProps {
   task: Task;
@@ -58,6 +59,12 @@ export function TaskItem({ task, onToggle, onDelete }: TaskItemProps) {
       onDelete(task.id);
     }, 300);
   };
+
+  const priorityColors = {
+    Low: "bg-blue-500/10 text-blue-400 border-blue-400/20",
+    Medium: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
+    High: "bg-red-500/10 text-red-500 border-red-500/20"
+  };
   
   return (
     <div className="space-y-2">
@@ -79,18 +86,30 @@ export function TaskItem({ task, onToggle, onDelete }: TaskItemProps) {
           className="size-5 rounded-full data-[state=checked]:bg-primary data-[state=checked]:border-primary transition-transform duration-300 data-[state=checked]:scale-110"
           aria-label={`Mark task as ${task.isCompleted ? 'incomplete' : 'complete'}`}
         />
-        <label
-          htmlFor={`task-${task.id}`}
-          className={cn(
-            'flex-grow text-sm font-medium transition-all duration-300 cursor-pointer select-none',
-            {
-              'line-through text-muted-foreground': task.isCompleted,
-            },
-            task.isWhimsical && !task.isCompleted && "text-accent italic"
-          )}
-        >
-          {task.title}
-        </label>
+        <div className="flex-grow flex flex-col gap-1 overflow-hidden">
+          <label
+            htmlFor={`task-${task.id}`}
+            className={cn(
+              'text-sm font-medium transition-all duration-300 cursor-pointer select-none truncate',
+              {
+                'line-through text-muted-foreground': task.isCompleted,
+              },
+              task.isWhimsical && !task.isCompleted && "text-accent italic"
+            )}
+          >
+            {task.title}
+          </label>
+          <div className="flex items-center gap-2">
+             <Badge variant="outline" className={cn("text-[9px] h-4 px-1.5 uppercase font-black tracking-widest", priorityColors[task.priority || 'Medium'])}>
+                {task.priority || 'Medium'}
+             </Badge>
+             {task.isWhimsical && (
+                <Badge variant="outline" className="text-[9px] h-4 px-1.5 uppercase font-black tracking-widest bg-accent/10 text-accent border-accent/20">
+                    Whimsical
+                </Badge>
+             )}
+          </div>
+        </div>
         
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <Button

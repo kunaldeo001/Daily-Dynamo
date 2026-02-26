@@ -4,7 +4,7 @@
 import { useMemo } from 'react';
 import { AddTaskForm } from './AddTaskForm';
 import { TaskItem } from './TaskItem';
-import type { Task, TaskCategory } from '@/lib/types';
+import type { Task, TaskCategory, TaskPriority } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ListTodo, Layers, Trash2, Zap } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -45,6 +45,11 @@ export function TaskContainer() {
     Object.keys(grouped).forEach(cat => {
       grouped[cat as TaskCategory].sort((a, b) => {
         if (a.isCompleted !== b.isCompleted) return a.isCompleted ? 1 : -1;
+        // Secondary sort by priority
+        const priorityMap = { High: 3, Medium: 2, Low: 1 };
+        if (priorityMap[a.priority || 'Medium'] !== priorityMap[b.priority || 'Medium']) {
+          return priorityMap[b.priority || 'Medium'] - priorityMap[a.priority || 'Medium'];
+        }
         return (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0);
       });
     });
@@ -58,11 +63,12 @@ export function TaskContainer() {
     return Math.round((completed / tasks.length) * 100);
   }, [tasks]);
 
-  const handleAddTask = (title: string, category: TaskCategory) => {
+  const handleAddTask = (title: string, category: TaskCategory, priority: TaskPriority) => {
     if (title.trim() === '' || !tasksCollection || !user) return;
     const newTask = {
       title,
       category,
+      priority,
       isCompleted: false,
       createdAt: serverTimestamp(),
       ownerId: user.uid,

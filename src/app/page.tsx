@@ -5,6 +5,7 @@ import { DailySpark } from '@/components/ai/DailySpark';
 import { TaskContainer } from '@/components/tasks/TaskContainer';
 import { PomodoroTimer } from '@/components/features/PomodoroTimer';
 import { ProductivityStats } from '@/components/features/ProductivityStats';
+import { DailyReflection } from '@/components/features/DailyReflection';
 import { useUser } from '@/firebase';
 import { AuthForm } from '@/components/auth/AuthForm';
 import { LoaderCircle } from 'lucide-react';
@@ -41,10 +42,11 @@ export default function Home() {
             <TaskContainer />
           </div>
 
-          {/* Sidebar / Stats Area */}
+          {/* Sidebar Area */}
           <div className="lg:col-span-4 space-y-8 lg:sticky lg:top-8">
             <PomodoroTimer />
             <ProductivityStats />
+            <DailyReflection />
             
             <div className="p-6 rounded-2xl bg-gradient-to-br from-primary/10 to-accent/10 border border-white/5 text-center space-y-2">
               <h4 className="font-headline font-bold text-lg">Daily Dynamo Tip</h4>

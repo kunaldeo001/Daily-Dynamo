@@ -34,6 +34,11 @@
           "enum": ["Productive", "Self-Care", "Whimsical"],
           "description": "The category of the task to help organize into columns."
         },
+        "priority": {
+          "type": "string",
+          "enum": ["Low", "Medium", "High"],
+          "description": "The energy/priority level of the task."
+        },
         "createdAt": {
           "type": "string",
           "format": "date-time",
@@ -82,6 +87,28 @@
         "createdAt",
         "ownerId"
       ]
+    },
+    "DailyReflection": {
+      "title": "Daily Reflection",
+      "type": "object",
+      "description": "A short note or reflection written by the user for a specific day.",
+      "properties": {
+        "reflectionDate": {
+          "type": "string",
+          "format": "date"
+        },
+        "note": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "ownerId": {
+          "type": "string"
+        }
+      },
+      "required": ["reflectionDate", "note", "ownerId"]
     }
   },
   "auth": {
@@ -108,6 +135,12 @@
         "$ref": "#/entities/DailySpark"
       },
       "description": "Stores AI-generated daily sparks or challenges provided to a specific user."
+    },
+    "/users/{userId}/reflections/{reflectionId}": {
+      "schema": {
+        "$ref": "#/entities/DailyReflection"
+      },
+      "description": "Stores daily reflections or notes for a specific user."
     }
   }
 }
