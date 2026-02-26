@@ -124,5 +124,19 @@ service cloud.firestore {
       allow update: if isExistingOwner(userId) && isOwnerImmutable();
       allow delete: if isExistingOwner(userId);
     }
+
+    /**
+     * @description Secures a user's private collection of daily reflections.
+     * @path /users/{userId}/reflections/{reflectionId}
+     * @allow (list) The owner of the user path can list all reflections in their own collection.
+     * @principle Enforces document ownership and validates relational integrity via a denormalized `ownerId` field.
+     */
+    match /users/{userId}/reflections/{reflectionId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && hasValidOwnerOnCreate(userId);
+      allow update: if isExistingOwner(userId) && isOwnerImmutable();
+      allow delete: if isExistingOwner(userId);
+    }
   }
 }
