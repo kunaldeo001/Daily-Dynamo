@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { aiDailySpark } from '@/ai/flows/ai-daily-spark-flow';
 import { visualizeSpark } from '@/ai/flows/visualize-spark-flow';
-import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore, useCollection, useMemoFirebase, useFirebase } from '@/firebase';
 import { collection, serverTimestamp, doc } from 'firebase/firestore';
 import { addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import type { DailySparkData } from '@/lib/types';
@@ -57,6 +57,7 @@ export function DailySpark() {
     try {
       const moodContext = selectedMood ? `The user is feeling ${selectedMood} today.` : '';
       const result = await aiDailySpark({ context: moodContext });
+      
       const newSpark = {
         content: result.suggestion,
         sparkDate: todayStr,
@@ -64,9 +65,22 @@ export function DailySpark() {
         ownerId: user.uid,
         mood: selectedMood || undefined,
       };
+      
       addDocumentNonBlocking(sparksCollection, newSpark);
+
+      if (result.isFallback) {
+        toast({
+          title: "Creative Mode: Manual",
+          description: "We picked a hand-crafted spark for you while the AI rests!",
+        });
+      }
     } catch (error) {
       console.error('Failed to generate daily spark:', error);
+      toast({
+        variant: "destructive",
+        title: "Ignition Failed",
+        description: "Could not spark a new idea right now. Check your connection!",
+      });
     } finally {
       setIsGenerating(false);
     }
@@ -88,6 +102,11 @@ export function DailySpark() {
       }
     } catch (error) {
       console.error('Failed to visualize spark:', error);
+      toast({
+        variant: "destructive",
+        title: "Visualization Failed",
+        description: "The magic mirror is cloudy. Try again in a moment!",
+      });
     } finally {
       setIsVisualizing(false);
     }
@@ -225,5 +244,3 @@ export function DailySpark() {
     </Card>
   );
 }
-
-import { useFirebase } from '@/firebase';
