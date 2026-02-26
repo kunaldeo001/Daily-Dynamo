@@ -1,8 +1,7 @@
-
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { Sparkles, LoaderCircle, Smile, Frown, Meh, Zap, Image as ImageIcon } from 'lucide-react';
+import { Sparkles, LoaderCircle, Smile, Frown, Meh, Zap, Image as ImageIcon, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { aiDailySpark } from '@/ai/flows/ai-daily-spark-flow';
@@ -14,6 +13,7 @@ import type { DailySparkData } from '@/lib/types';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
+import { useToast } from '@/hooks/use-toast';
 
 const MOODS = [
   { id: 'motivated', icon: Zap, color: 'text-yellow-500', glow: 'mood-glow-motivated', bg: 'bg-yellow-500/5', label: 'Motivated' },
@@ -28,7 +28,8 @@ export function DailySpark() {
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [todayStr, setTodayStr] = useState<string | null>(null);
   const { user } = useUser();
-  const firestore = useFirestore();
+  const firestore = useFirebase().firestore;
+  const { toast } = useToast();
 
   useEffect(() => {
     setTodayStr(format(new Date(), 'yyyy-MM-dd'));
@@ -78,6 +79,13 @@ export function DailySpark() {
       const result = await visualizeSpark({ sparkContent: todaySpark.content });
       const sparkRef = doc(firestore, `users/${user.uid}/dailySparks/${todaySpark.id}`);
       updateDocumentNonBlocking(sparkRef, { imageUrl: result.imageUrl });
+      
+      if (result.isFallback) {
+        toast({
+          title: "Visualization Mode: Whimsical Fallback",
+          description: "AI image generation is resting, so we used a hand-picked whimsical image for you!",
+        });
+      }
     } catch (error) {
       console.error('Failed to visualize spark:', error);
     } finally {
@@ -152,7 +160,7 @@ export function DailySpark() {
               )}
             </div>
           ) : (
-            <div className="text-muted-foreground font-normal">
+            <div className="text-muted-foreground font-normal text-center">
               <p className="mb-2">How's your vibe today?</p>
               <p className="text-sm">Select a mood and ignite your daily spark!</p>
             </div>
@@ -187,6 +195,11 @@ export function DailySpark() {
                   className="object-cover transition-transform duration-700 group-hover:scale-105"
                   data-ai-hint="Whimsical spark illustration"
                 />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity p-4">
+                   <div className="flex items-center gap-1 text-[10px] text-white/80 font-bold uppercase tracking-widest">
+                      <Info className="size-3" /> Visualization Mode
+                   </div>
+                </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
                 <Button 
                    variant="ghost" 
@@ -205,3 +218,5 @@ export function DailySpark() {
     </Card>
   );
 }
+
+import { useFirebase } from '@/firebase';

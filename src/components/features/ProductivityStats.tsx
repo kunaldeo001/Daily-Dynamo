@@ -1,13 +1,13 @@
-
 'use client';
 
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TrendingUp, PieChart as PieIcon } from 'lucide-react';
+import { TrendingUp, PieChart as PieIcon, Trophy, Star, ShieldCheck } from 'lucide-react';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import type { Task } from '@/lib/types';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { cn } from '@/lib/utils';
 
 export function ProductivityStats() {
   const { user } = useUser();
@@ -39,52 +39,77 @@ export function ProductivityStats() {
     tasks?.filter(t => t.isCompleted).length || 0
   , [tasks]);
 
-  if (!tasks || tasks.length === 0 || totalCompleted === 0) return null;
+  const rankInfo = useMemo(() => {
+    if (totalCompleted === 0) return { rank: 'Novice', icon: ShieldCheck, color: 'text-muted-foreground' };
+    if (totalCompleted < 3) return { rank: 'Spark', icon: Star, color: 'text-yellow-400' };
+    if (totalCompleted < 7) return { rank: 'Dynamo', icon: TrendingUp, color: 'text-primary' };
+    return { rank: 'Legend', icon: Trophy, color: 'text-amber-500' };
+  }, [totalCompleted]);
+
+  if (!tasks || tasks.length === 0) return null;
 
   return (
     <Card className="shadow-lg bg-card/80 backdrop-blur-sm border-primary/10 animate-in fade-in slide-in-from-right-8 duration-700">
       <CardHeader className="pb-2">
-        <div className="flex items-center gap-2">
-          <TrendingUp className="text-primary h-5 w-5" />
-          <CardTitle className="font-headline text-lg">Daily Momentum</CardTitle>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="text-primary h-5 w-5" />
+            <CardTitle className="font-headline text-lg">Daily Momentum</CardTitle>
+          </div>
+          <div className={cn("flex items-center gap-1 text-[10px] font-black uppercase tracking-widest", rankInfo.color)}>
+             <rankInfo.icon className="size-3" /> {rankInfo.rank}
+          </div>
         </div>
       </CardHeader>
       <CardContent>
-        <div className="h-[200px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={stats}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={80}
-                paddingAngle={5}
-                dataKey="value"
-              >
-                {stats.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
-                ))}
-              </Pie>
-              <Tooltip 
-                contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
-                itemStyle={{ color: 'hsl(var(--foreground))' }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-        <div className="text-center mt-[-100px] pointer-events-none pb-12">
-          <div className="text-3xl font-bold font-headline">{totalCompleted}</div>
-          <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Crushed</div>
-        </div>
-        <div className="flex justify-center gap-4 text-xs font-bold pt-4">
-          {stats.map(s => (
-            <div key={s.name} className="flex items-center gap-1">
-              <div className="size-2 rounded-full" style={{ backgroundColor: s.color }} />
-              <span className="text-muted-foreground">{s.name}</span>
+        {totalCompleted > 0 ? (
+          <>
+            <div className="h-[200px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={stats}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={80}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {stats.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
+                    itemStyle={{ color: 'hsl(var(--foreground))' }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
             </div>
-          ))}
-        </div>
+            <div className="text-center mt-[-100px] pointer-events-none pb-12">
+              <div className="text-3xl font-bold font-headline">{totalCompleted}</div>
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Crushed</div>
+            </div>
+            <div className="flex justify-center flex-wrap gap-4 text-xs font-bold pt-4">
+              {stats.map(s => (
+                <div key={s.name} className="flex items-center gap-1">
+                  <div className="size-2 rounded-full" style={{ backgroundColor: s.color }} />
+                  <span className="text-muted-foreground">{s.name}</span>
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className="py-12 text-center space-y-3">
+             <div className="flex justify-center">
+                <ShieldCheck className="size-12 text-muted-foreground/30" />
+             </div>
+             <p className="text-sm text-muted-foreground italic">
+                No tasks conquered yet. Ignite a spark to begin!
+             </p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

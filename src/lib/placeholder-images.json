@@ -1,3 +1,16 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "whimsical-spark-fallback",
+      "description": "A vibrant and whimsical dreamlike illustration representing creative energy.",
+      "imageUrl": "https://images.unsplash.com/photo-1729735095620-051e60a4c367?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHx3aGltc2ljYWwlMjBtYWdpY3xlbnwwfHx8fDE3NzIxMzExNTF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "whimsical magic"
+    },
+    {
+      "id": "productivity-zen",
+      "description": "A peaceful and focused workspace in a dreamlike style.",
+      "imageUrl": "https://images.unsplash.com/photo-1628538245478-27855bb296d5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxkcmVhbWxpa2UlMjBmb2N1c3xlbnwwfHx8fDE3NzIxMzExNTF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "dreamlike focus"
+    }
+  ]
 }
