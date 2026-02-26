@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { Task, TaskPriority } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import { Trash2, Sparkles, LoaderCircle, Zap, CheckCircle2 } from 'lucide-react';
+import { Trash2, Sparkles, LoaderCircle, Zap, CheckCircle2, Trophy, Clock } from 'lucide-react';
 import { useState } from 'react';
 import { breakdownTask } from '@/ai/flows/breakdown-task-flow';
 import { useFirestore, useUser } from '@/firebase';
@@ -70,15 +70,22 @@ export function TaskItem({ task, onToggle, onDelete }: TaskItemProps) {
     <div className="space-y-2">
       <li
         className={cn(
-          'group flex items-center gap-3 p-3 rounded-xl bg-card border border-border/50 transition-all duration-300 animate-in fade-in slide-in-from-top-2 hover:shadow-md',
+          'group flex items-center gap-3 p-3 rounded-xl bg-card border border-border/50 transition-all duration-300 animate-in fade-in slide-in-from-top-2 hover:shadow-md relative overflow-hidden',
           task.isWhimsical && "bg-gradient-to-r from-card to-accent/5 border-accent/30",
+          task.isMainQuest && !task.isCompleted && "border-yellow-500/40 bg-yellow-500/5",
           {
             'opacity-60 grayscale-[0.5]': task.isCompleted,
             'animate-out fade-out slide-out-to-left-4': isDeleting,
-            'hover:border-primary/20': !task.isWhimsical,
+            'hover:border-primary/20': !task.isWhimsical && !task.isMainQuest,
           }
         )}
       >
+        {task.isMainQuest && !task.isCompleted && (
+          <div className="absolute top-0 right-0 p-1">
+             <Trophy className="size-3 text-yellow-500/50" />
+          </div>
+        )}
+
         <Checkbox
           id={`task-${task.id}`}
           checked={task.isCompleted}
@@ -94,24 +101,30 @@ export function TaskItem({ task, onToggle, onDelete }: TaskItemProps) {
               {
                 'line-through text-muted-foreground': task.isCompleted,
               },
-              task.isWhimsical && !task.isCompleted && "text-accent italic"
+              task.isWhimsical && !task.isCompleted && "text-accent italic",
+              task.isMainQuest && !task.isCompleted && "text-foreground font-bold"
             )}
           >
             {task.title}
           </label>
           <div className="flex items-center gap-2">
-             <Badge variant="outline" className={cn("text-[9px] h-4 px-1.5 uppercase font-black tracking-widest", priorityColors[task.priority || 'Medium'])}>
+             <Badge variant="outline" className={cn("text-[8px] h-3.5 px-1 uppercase font-black tracking-widest leading-none", priorityColors[task.priority || 'Medium'])}>
                 {task.priority || 'Medium'}
              </Badge>
+             {task.duration && (
+                <div className="flex items-center gap-1 text-[8px] font-bold text-muted-foreground">
+                   <Clock className="size-2" /> {task.duration}
+                </div>
+             )}
              {task.isWhimsical && (
-                <Badge variant="outline" className="text-[9px] h-4 px-1.5 uppercase font-black tracking-widest bg-accent/10 text-accent border-accent/20">
-                    Whimsical
+                <Badge variant="outline" className="text-[8px] h-3.5 px-1 uppercase font-black tracking-widest leading-none bg-accent/10 text-accent border-accent/20">
+                    Whimsy
                 </Badge>
              )}
           </div>
         </div>
         
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
           <Button
             variant="ghost"
             size="icon"

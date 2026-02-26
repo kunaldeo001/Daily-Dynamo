@@ -39,6 +39,14 @@
           "enum": ["Low", "Medium", "High"],
           "description": "The energy/priority level of the task."
         },
+        "duration": {
+          "type": "string",
+          "description": "Estimated time for the task (e.g., 15m, 1h)."
+        },
+        "isMainQuest": {
+          "type": "boolean",
+          "description": "Whether this task is the primary goal for the day."
+        },
         "createdAt": {
           "type": "string",
           "format": "date-time",
@@ -70,6 +78,10 @@
         "content": {
           "type": "string",
           "description": "The actual text content of the daily spark or challenge."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "A data URI of an AI generated image visualizing the spark."
         },
         "createdAt": {
           "type": "string",

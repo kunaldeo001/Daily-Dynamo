@@ -4,3 +4,4 @@ config();
 
 import '@/ai/flows/ai-daily-spark-flow.ts';
 import '@/ai/flows/breakdown-task-flow.ts';
+import '@/ai/flows/visualize-spark-flow.ts';

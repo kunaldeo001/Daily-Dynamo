@@ -8,6 +8,8 @@ export interface Task {
   isCompleted: boolean;
   category: TaskCategory;
   priority: TaskPriority;
+  duration?: string;
+  isMainQuest?: boolean;
   createdAt: any;
   ownerId: string;
   breakdown?: string; // AI generated breakdown steps
@@ -18,6 +20,7 @@ export interface DailySparkData {
   id: string;
   content: string;
   sparkDate: string;
+  imageUrl?: string;
   createdAt: any;
   ownerId: string;
   mood?: string;

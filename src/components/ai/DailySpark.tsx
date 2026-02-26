@@ -2,16 +2,18 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { Sparkles, LoaderCircle, Smile, Frown, Meh, Zap } from 'lucide-react';
+import { Sparkles, LoaderCircle, Smile, Frown, Meh, Zap, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { aiDailySpark } from '@/ai/flows/ai-daily-spark-flow';
+import { visualizeSpark } from '@/ai/flows/visualize-spark-flow';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, serverTimestamp } from 'firebase/firestore';
-import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { collection, serverTimestamp, doc } from 'firebase/firestore';
+import { addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import type { DailySparkData } from '@/lib/types';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
 
 const MOODS = [
   { id: 'motivated', icon: Zap, color: 'text-yellow-500', glow: 'mood-glow-motivated', bg: 'bg-yellow-500/5', label: 'Motivated' },
@@ -22,6 +24,7 @@ const MOODS = [
 
 export function DailySpark() {
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isVisualizing, setIsVisualizing] = useState(false);
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [todayStr, setTodayStr] = useState<string | null>(null);
   const { user } = useUser();
@@ -65,6 +68,20 @@ export function DailySpark() {
       console.error('Failed to generate daily spark:', error);
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleVisualize = async () => {
+    if (!todaySpark || !user || !firestore) return;
+    setIsVisualizing(true);
+    try {
+      const result = await visualizeSpark({ sparkContent: todaySpark.content });
+      const sparkRef = doc(firestore, `users/${user.uid}/dailySparks/${todaySpark.id}`);
+      updateDocumentNonBlocking(sparkRef, { imageUrl: result.imageUrl });
+    } catch (error) {
+      console.error('Failed to visualize spark:', error);
+    } finally {
+      setIsVisualizing(false);
     }
   };
   
@@ -115,7 +132,7 @@ export function DailySpark() {
           </Button>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-6">
         <div className={cn(
           "text-center text-lg min-h-[6rem] flex flex-col items-center justify-center p-6 rounded-xl border transition-colors duration-500 relative overflow-hidden",
           currentMoodInfo?.bg || "bg-primary/5",
@@ -124,7 +141,7 @@ export function DailySpark() {
           {isLoading ? (
             <LoaderCircle className="animate-spin text-primary size-8" />
           ) : todaySpark ? (
-            <div className="animate-in zoom-in-95 duration-500 space-y-2">
+            <div className="animate-in zoom-in-95 duration-500 space-y-4">
               <p className="italic font-medium leading-relaxed text-xl text-foreground">
                 "{todaySpark.content}"
               </p>
@@ -141,6 +158,49 @@ export function DailySpark() {
             </div>
           )}
         </div>
+
+        {todaySpark && (
+          <div className="space-y-4">
+            {!todaySpark.imageUrl && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleVisualize} 
+                disabled={isVisualizing}
+                className="w-full border-dashed border-primary/30 hover:border-primary/60"
+              >
+                {isVisualizing ? (
+                  <LoaderCircle className="animate-spin size-4 mr-2" />
+                ) : (
+                  <ImageIcon className="size-4 mr-2" />
+                )}
+                Visualize this Spark
+              </Button>
+            )}
+            
+            {todaySpark.imageUrl && (
+              <div className="relative aspect-video rounded-xl overflow-hidden border border-primary/20 shadow-inner group animate-in fade-in zoom-in-95 duration-700">
+                <Image 
+                  src={todaySpark.imageUrl} 
+                  alt="Daily Spark Visualization" 
+                  fill 
+                  className="object-cover transition-transform duration-700 group-hover:scale-105"
+                  data-ai-hint="Whimsical spark illustration"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
+                <Button 
+                   variant="ghost" 
+                   size="sm" 
+                   onClick={handleVisualize} 
+                   className="absolute bottom-2 right-2 h-7 px-2 text-[10px] bg-black/40 hover:bg-black/60 text-white border-white/10"
+                   disabled={isVisualizing}
+                >
+                  {isVisualizing ? 'Re-imagining...' : 'Re-imagine'}
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
