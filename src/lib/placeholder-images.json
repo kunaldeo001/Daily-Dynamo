@@ -11,6 +11,24 @@
       "description": "A peaceful and focused workspace in a dreamlike style.",
       "imageUrl": "https://images.unsplash.com/photo-1628538245478-27855bb296d5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxkcmVhbWxpa2UlMjBmb2N1c3xlbnwwfHx8fDE3NzIxMzExNTF8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "dreamlike focus"
+    },
+    {
+      "id": "vibrant-energy",
+      "description": "Explosion of colorful gradients representing inspiration.",
+      "imageUrl": "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
+      "imageHint": "vibrant colors"
+    },
+    {
+      "id": "cosmic-spark",
+      "description": "A cosmic nebular spark in deep purple and magenta.",
+      "imageUrl": "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
+      "imageHint": "cosmic energy"
+    },
+    {
+      "id": "abstract-flow",
+      "description": "Flowing liquid gold and purple shapes.",
+      "imageUrl": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
+      "imageHint": "abstract flow"
     }
   ]
 }

@@ -82,8 +82,8 @@ export function DailySpark() {
       
       if (result.isFallback) {
         toast({
-          title: "Visualization Mode: Whimsical Fallback",
-          description: "AI image generation is resting, so we used a hand-picked whimsical image for you!",
+          title: "Vision Fallback Activated",
+          description: "We picked a hand-crafted whimsical scene to match your spark!",
         });
       }
     } catch (error) {
@@ -175,7 +175,7 @@ export function DailySpark() {
                 size="sm" 
                 onClick={handleVisualize} 
                 disabled={isVisualizing}
-                className="w-full border-dashed border-primary/30 hover:border-primary/60"
+                className="w-full border-dashed border-primary/30 hover:border-primary/60 transition-all duration-300 hover:bg-primary/5"
               >
                 {isVisualizing ? (
                   <LoaderCircle className="animate-spin size-4 mr-2" />
@@ -187,25 +187,32 @@ export function DailySpark() {
             )}
             
             {todaySpark.imageUrl && (
-              <div className="relative aspect-video rounded-xl overflow-hidden border border-primary/20 shadow-inner group animate-in fade-in zoom-in-95 duration-700">
+              <div className="relative aspect-video rounded-xl overflow-hidden border border-primary/20 shadow-2xl group animate-in fade-in zoom-in-95 duration-700">
                 <Image 
                   src={todaySpark.imageUrl} 
                   alt="Daily Spark Visualization" 
                   fill 
-                  className="object-cover transition-transform duration-700 group-hover:scale-105"
-                  data-ai-hint="Whimsical spark illustration"
+                  className="object-cover transition-transform duration-1000 group-hover:scale-110"
+                  data-ai-hint="whimsical spark"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity p-4">
-                   <div className="flex items-center gap-1 text-[10px] text-white/80 font-bold uppercase tracking-widest">
-                      <Info className="size-3" /> Visualization Mode
+                
+                {/* Improved Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 p-6 flex flex-col justify-end">
+                   <div className="flex items-center gap-2 text-xs text-white font-bold uppercase tracking-[0.2em] mb-2 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                      <Sparkles className="size-4 text-primary animate-pulse" /> Spark Vision
                    </div>
+                   <p className="text-white/80 text-sm italic line-clamp-2 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 delay-75">
+                      {todaySpark.content}
+                   </p>
                 </div>
+                
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
+                
                 <Button 
                    variant="ghost" 
                    size="sm" 
                    onClick={handleVisualize} 
-                   className="absolute bottom-2 right-2 h-7 px-2 text-[10px] bg-black/40 hover:bg-black/60 text-white border-white/10"
+                   className="absolute top-2 right-2 h-7 px-2 text-[10px] bg-black/40 hover:bg-black/60 text-white border-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                    disabled={isVisualizing}
                 >
                   {isVisualizing ? 'Re-imagining...' : 'Re-imagine'}
