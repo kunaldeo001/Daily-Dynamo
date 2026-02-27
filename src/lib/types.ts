@@ -33,3 +33,12 @@ export interface DailyReflectionData {
   createdAt: any;
   ownerId: string;
 }
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  displayName?: string;
+  dailyMotto?: string;
+  pomodoroWorkMinutes?: number;
+  pomodoroBreakMinutes?: number;
+}
