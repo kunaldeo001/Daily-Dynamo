@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -17,12 +16,15 @@ export function PomodoroTimer() {
   const [mode, setMode] = useState<'work' | 'break'>('work');
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const playNotification = () => {
-    if (!soundEnabled) return;
+    if (!soundEnabled || typeof window === 'undefined') return;
     try {
-      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) return;
+      
+      const audioCtx = new AudioContextClass();
       const oscillator = audioCtx.createOscillator();
       const gainNode = audioCtx.createGain();
       
@@ -30,8 +32,8 @@ export function PomodoroTimer() {
       gainNode.connect(audioCtx.destination);
       
       oscillator.type = 'sine';
-      oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // A5
-      oscillator.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.5); // A4
+      oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.5);
       
       gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
       gainNode.gain.linearRampToValueAtTime(0.1, audioCtx.currentTime + 0.01);
@@ -40,7 +42,7 @@ export function PomodoroTimer() {
       oscillator.start();
       oscillator.stop(audioCtx.currentTime + 0.5);
     } catch (e) {
-      console.warn('Audio context failed', e);
+      console.warn('Audio feedback failed', e);
     }
   };
 
@@ -90,7 +92,7 @@ export function PomodoroTimer() {
   };
 
   return (
-    <Card className="shadow-lg bg-card/80 backdrop-blur-sm border-accent/20 animate-in fade-in slide-in-from-right-8 duration-700 overflow-hidden">
+    <Card className="shadow-lg bg-card/80 backdrop-blur-sm border-accent/20 animate-in fade-in slide-in-from-right-8 duration-700 overflow-hidden relative">
       <div className={cn(
         "absolute top-0 left-0 w-full h-1 transition-colors duration-500",
         mode === 'work' ? "bg-primary" : "bg-accent"

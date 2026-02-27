@@ -1,12 +1,11 @@
-
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { AddTaskForm } from './AddTaskForm';
 import { TaskItem } from './TaskItem';
 import type { Task, TaskCategory, TaskPriority } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ListTodo, Layers, Trash2, Zap, Trophy, Star } from 'lucide-react';
+import { ListTodo, Layers, Trash2, Zap, Trophy, Star, Sparkles } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
@@ -15,10 +14,13 @@ import { addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlo
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 export function TaskContainer() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
+  const { toast } = useToast();
+  const [celebratingQuest, setCelebratingQuest] = useState(false);
 
   const tasksCollection = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -42,7 +44,6 @@ export function TaskContainer() {
     if (!tasks) return grouped;
     
     tasks.forEach(task => {
-      // If it's the active main quest, we might still show it in its column
       if (grouped[task.category]) {
         grouped[task.category].push(task);
       }
@@ -50,13 +51,13 @@ export function TaskContainer() {
 
     Object.keys(grouped).forEach(cat => {
       grouped[cat as TaskCategory].sort((a, b) => {
-        // Main quest always at the top of its column
         if (a.isMainQuest !== b.isMainQuest) return a.isMainQuest ? -1 : 1;
         if (a.isCompleted !== b.isCompleted) return a.isCompleted ? 1 : -1;
-        // Secondary sort by priority
         const priorityMap = { High: 3, Medium: 2, Low: 1 };
-        if (priorityMap[a.priority || 'Medium'] !== priorityMap[b.priority || 'Medium']) {
-          return priorityMap[b.priority || 'Medium'] - priorityMap[a.priority || 'Medium'];
+        const pA = a.priority || 'Medium';
+        const pB = b.priority || 'Medium';
+        if (priorityMap[pA] !== priorityMap[pB]) {
+          return priorityMap[pB] - priorityMap[pA];
         }
         return (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0);
       });
@@ -74,7 +75,6 @@ export function TaskContainer() {
   const handleAddTask = (title: string, category: TaskCategory, priority: TaskPriority, duration: string, isMainQuest: boolean) => {
     if (title.trim() === '' || !tasksCollection || !user) return;
     
-    // If setting a new main quest, we might want to unmark others, but for simplicity let's allow multiple or just add this one
     const newTask = {
       title,
       category,
@@ -86,14 +86,30 @@ export function TaskContainer() {
       ownerId: user.uid,
     };
     addDocumentNonBlocking(tasksCollection, newTask);
+    
+    toast({
+      title: "Task Ignited",
+      description: `"${title}" has been added to your ${category} list.`,
+    });
   };
 
   const handleToggleTask = (id: string) => {
     if (!firestore || !user) return;
     const task = tasks?.find(t => t.id === id);
     if (!task) return;
+    
+    const isNowCompleted = !task.isCompleted;
     const taskRef = doc(firestore, `users/${user.uid}/tasks/${id}`);
-    updateDocumentNonBlocking(taskRef, { isCompleted: !task.isCompleted });
+    updateDocumentNonBlocking(taskRef, { isCompleted: isNowCompleted });
+
+    if (isNowCompleted && task.isMainQuest) {
+      setCelebratingQuest(true);
+      toast({
+        title: "Main Quest Conquered! 🏆",
+        description: `Legendary effort! "${task.title}" is complete.`,
+      });
+      setTimeout(() => setCelebratingQuest(false), 3000);
+    }
   };
 
   const handleDeleteTask = (id: string) => {
@@ -151,10 +167,16 @@ export function TaskContainer() {
 
       {/* Featured Main Quest */}
       {mainQuest && (
-        <div className="relative p-1 rounded-2xl bg-gradient-to-r from-yellow-500 via-amber-400 to-yellow-500 animate-sparkle shadow-lg">
-          <div className="bg-card rounded-[calc(1rem-2px)] p-6 space-y-4">
+        <div className={cn(
+          "relative p-1 rounded-2xl bg-gradient-to-r from-yellow-500 via-amber-400 to-yellow-500 shadow-lg transition-all duration-1000",
+          celebratingQuest ? "scale-105 shadow-yellow-500/50" : "animate-sparkle"
+        )}>
+          <div className="bg-card rounded-[calc(1rem-2px)] p-6 space-y-4 relative overflow-hidden">
+            {celebratingQuest && (
+              <div className="absolute inset-0 bg-yellow-500/10 animate-pulse pointer-events-none" />
+            )}
             <div className="flex items-center gap-2 text-yellow-600 font-black text-[10px] uppercase tracking-[0.3em]">
-              <Trophy className="size-4 fill-yellow-500/20" /> Active Main Quest
+              <Trophy className="size-4 fill-yellow-500/20" /> {celebratingQuest ? "Quest Conquered" : "Active Main Quest"}
             </div>
             <div className="flex items-center justify-between gap-4">
               <h2 className="font-headline text-3xl font-bold tracking-tight text-foreground leading-tight">
@@ -162,9 +184,9 @@ export function TaskContainer() {
               </h2>
               <Button 
                 onClick={() => handleToggleTask(mainQuest.id)} 
-                className="bg-yellow-500 hover:bg-yellow-600 text-white shadow-lg shrink-0"
+                className="bg-yellow-500 hover:bg-yellow-600 text-white shadow-lg shrink-0 group"
               >
-                Conquer Quest
+                <Sparkles className="mr-2 size-4 group-hover:animate-spin" /> Conquer Quest
               </Button>
             </div>
             <div className="flex items-center gap-3">

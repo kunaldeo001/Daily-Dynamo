@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { Sparkles, LoaderCircle, Smile, Frown, Meh, Zap, Image as ImageIcon, Info } from 'lucide-react';
+import { Sparkles, LoaderCircle, Smile, Frown, Meh, Zap, Image as ImageIcon, History, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { aiDailySpark } from '@/ai/flows/ai-daily-spark-flow';
@@ -14,6 +14,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 const MOODS = [
   { id: 'motivated', icon: Zap, color: 'text-yellow-500', glow: 'mood-glow-motivated', bg: 'bg-yellow-500/5', label: 'Motivated' },
@@ -27,6 +28,7 @@ export function DailySpark() {
   const [isVisualizing, setIsVisualizing] = useState(false);
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [todayStr, setTodayStr] = useState<string | null>(null);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const { user } = useUser();
   const firestore = useFirebase().firestore;
   const { toast } = useToast();
@@ -48,6 +50,14 @@ export function DailySpark() {
       .filter(s => s.sparkDate === todayStr)
       .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
     return todaySparks[0] || null;
+  }, [sparks, todayStr]);
+
+  const historySparks = useMemo(() => {
+    if (!sparks || !todayStr) return [];
+    return sparks
+      .filter(s => s.sparkDate !== todayStr)
+      .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0))
+      .slice(0, 5);
   }, [sparks, todayStr]);
 
   const handleGenerateSpark = async () => {
@@ -215,7 +225,6 @@ export function DailySpark() {
                   data-ai-hint="whimsical spark"
                 />
                 
-                {/* Improved Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 p-6 flex flex-col justify-end">
                    <div className="flex items-center gap-2 text-xs text-white font-bold uppercase tracking-[0.2em] mb-2 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
                       <Sparkles className="size-4 text-primary animate-pulse" /> Spark Vision
@@ -239,6 +248,35 @@ export function DailySpark() {
               </div>
             )}
           </div>
+        )}
+
+        {/* History Section */}
+        {historySparks.length > 0 && (
+          <Collapsible open={isHistoryOpen} onOpenChange={setIsHistoryOpen} className="pt-4 border-t border-primary/10">
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" size="sm" className="w-full flex items-center justify-between text-muted-foreground hover:text-primary transition-colors">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest">
+                  <History className="size-3" /> Spark History
+                </div>
+                {isHistoryOpen ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-3 pt-4">
+              {historySparks.map((s) => (
+                <div key={s.id} className="p-3 rounded-lg bg-background/40 border border-primary/5 text-sm italic relative overflow-hidden group">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase">{s.sparkDate}</span>
+                    {s.mood && (
+                      <span className="text-[8px] font-black uppercase text-primary/40 tracking-tighter">Mood: {s.mood}</span>
+                    )}
+                  </div>
+                  <p className="text-muted-foreground group-hover:text-foreground transition-colors leading-snug">
+                    "{s.content}"
+                  </p>
+                </div>
+              ))}
+            </CollapsibleContent>
+          </Collapsible>
         )}
       </CardContent>
     </Card>
