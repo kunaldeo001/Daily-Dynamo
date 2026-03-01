@@ -126,159 +126,162 @@ export function DailySpark() {
   const currentMoodInfo = MOODS.find(m => m.id === (todaySpark?.mood || selectedMood));
 
   return (
-    <Card className={cn(
-      "w-full shadow-lg transition-all duration-700 bg-card/80 backdrop-blur-sm border-primary/20 animate-in fade-in slide-in-from-top-8",
-      currentMoodInfo?.glow
-    )}>
-      <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-            <Sparkles className={cn("transition-colors duration-500", currentMoodInfo?.color || "text-primary")} />
-            <CardTitle className="font-headline text-xl">
-            AI Daily Spark
-            </CardTitle>
-        </div>
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0">
-          {MOODS.map((m) => (
-            <Button
-              key={m.id}
-              variant="ghost"
-              size="sm"
-              onClick={() => setSelectedMood(m.id)}
-              className={cn(
-                "p-2 h-9 w-9 rounded-full transition-all",
-                (selectedMood === m.id || todaySpark?.mood === m.id) ? "bg-muted scale-110" : "opacity-50 hover:opacity-100"
-              )}
-              title={m.label}
-            >
-              <m.icon className={cn("size-5", m.color)} />
-            </Button>
-          ))}
-          <Button 
-            onClick={handleGenerateSpark} 
-            disabled={isLoading} 
-            size="sm" 
-            variant="default" 
-            className="bg-primary hover:bg-primary/90 ml-2 shadow-sm"
-          >
-            {isLoading ? (
-              <LoaderCircle className="animate-spin h-4 w-4" />
-            ) : (
-              <Zap className="mr-2 size-4" />
-            )}
-            {todaySpark ? 'Regenerate' : 'Ignite'}
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className={cn(
-          "text-center text-lg min-h-[6rem] flex flex-col items-center justify-center p-6 rounded-xl border transition-colors duration-500 relative overflow-hidden",
-          currentMoodInfo?.bg || "bg-primary/5",
-          currentMoodInfo ? `border-${currentMoodInfo.color.split('-')[1]}/20` : "border-primary/10"
-        )}>
-          {isLoading ? (
-            <LoaderCircle className="animate-spin text-primary size-8" />
-          ) : todaySpark ? (
-            <div className="animate-in zoom-in-95 duration-500 space-y-4">
-              <p className="italic font-medium leading-relaxed text-xl text-foreground">
-                "{todaySpark.content}"
-              </p>
-              {todaySpark.mood && (
-                <div className={cn("text-[10px] uppercase tracking-[0.2em] font-bold", currentMoodInfo?.color || "text-primary/60")}>
-                  Tailored for your {todaySpark.mood} vibe
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="text-muted-foreground font-normal text-center">
-              <p className="mb-2">How's your vibe today?</p>
-              <p className="text-sm">Select a mood and ignite your daily spark!</p>
-            </div>
-          )}
-        </div>
-
-        {todaySpark && (
-          <div className="space-y-4">
-            {!todaySpark.imageUrl && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleVisualize} 
-                disabled={isVisualizing}
-                className="w-full border-dashed border-primary/30 hover:border-primary/60 transition-all duration-300 hover:bg-primary/5"
-              >
-                {isVisualizing ? (
-                  <LoaderCircle className="animate-spin size-4 mr-2" />
-                ) : (
-                  <ImageIcon className="size-4 mr-2" />
+    <div className="perspective-1000">
+      <Card className={cn(
+        "w-full shadow-lg transition-all duration-700 bg-card/80 backdrop-blur-sm border-primary/20 animate-in fade-in slide-in-from-top-8 preserve-3d group/spark hover:rotate-y-1 hover:rotate-x-1",
+        currentMoodInfo?.glow,
+        todaySpark?.imageUrl && "animate-float-3d"
+      )}>
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+              <Sparkles className={cn("transition-colors duration-500", currentMoodInfo?.color || "text-primary")} />
+              <CardTitle className="font-headline text-xl">
+              AI Daily Spark
+              </CardTitle>
+          </div>
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0">
+            {MOODS.map((m) => (
+              <Button
+                key={m.id}
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedMood(m.id)}
+                className={cn(
+                  "p-2 h-9 w-9 rounded-full transition-all hover:scale-125",
+                  (selectedMood === m.id || todaySpark?.mood === m.id) ? "bg-muted scale-110 shadow-inner" : "opacity-50 hover:opacity-100"
                 )}
-                Visualize this Spark
+                title={m.label}
+              >
+                <m.icon className={cn("size-5", m.color)} />
               </Button>
-            )}
-            
-            {todaySpark.imageUrl && (
-              <div className="relative aspect-video rounded-xl overflow-hidden border border-primary/20 shadow-2xl group animate-in fade-in zoom-in-95 duration-700">
-                <Image 
-                  src={todaySpark.imageUrl} 
-                  alt="Daily Spark Visualization" 
-                  fill 
-                  className="object-cover transition-transform duration-1000 group-hover:scale-110"
-                  data-ai-hint="whimsical spark"
-                />
-                
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 p-6 flex flex-col justify-end">
-                   <div className="flex items-center gap-2 text-xs text-white font-bold uppercase tracking-[0.2em] mb-2 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                      <Sparkles className="size-4 text-primary animate-pulse" /> Spark Vision
-                   </div>
-                   <p className="text-white/80 text-sm italic line-clamp-2 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 delay-75">
-                      {todaySpark.content}
-                   </p>
-                </div>
-                
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
-                
-                <Button 
-                   variant="ghost" 
-                   size="sm" 
-                   onClick={handleVisualize} 
-                   className="absolute top-2 right-2 h-7 px-2 text-[10px] bg-black/40 hover:bg-black/60 text-white border-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                   disabled={isVisualizing}
-                >
-                  {isVisualizing ? 'Re-imagining...' : 'Re-imagine'}
-                </Button>
+            ))}
+            <Button 
+              onClick={handleGenerateSpark} 
+              disabled={isLoading} 
+              size="sm" 
+              variant="default" 
+              className="bg-primary hover:bg-primary/90 ml-2 shadow-sm transition-transform hover:scale-105"
+            >
+              {isLoading ? (
+                <LoaderCircle className="animate-spin h-4 w-4" />
+              ) : (
+                <Zap className="mr-2 size-4" />
+              )}
+              {todaySpark ? 'Regenerate' : 'Ignite'}
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className={cn(
+            "text-center text-lg min-h-[6rem] flex flex-col items-center justify-center p-6 rounded-xl border transition-all duration-500 relative overflow-hidden preserve-3d group-hover/spark:translate-z-10",
+            currentMoodInfo?.bg || "bg-primary/5",
+            currentMoodInfo ? `border-${currentMoodInfo.color.split('-')[1]}/20` : "border-primary/10"
+          )}>
+            {isLoading ? (
+              <LoaderCircle className="animate-spin text-primary size-8" />
+            ) : todaySpark ? (
+              <div className="animate-in zoom-in-95 duration-500 space-y-4">
+                <p className="italic font-medium leading-relaxed text-xl text-foreground">
+                  "{todaySpark.content}"
+                </p>
+                {todaySpark.mood && (
+                  <div className={cn("text-[10px] uppercase tracking-[0.2em] font-bold", currentMoodInfo?.color || "text-primary/60")}>
+                    Tailored for your {todaySpark.mood} vibe
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-muted-foreground font-normal text-center">
+                <p className="mb-2">How's your vibe today?</p>
+                <p className="text-sm">Select a mood and ignite your daily spark!</p>
               </div>
             )}
           </div>
-        )}
 
-        {/* History Section */}
-        {historySparks.length > 0 && (
-          <Collapsible open={isHistoryOpen} onOpenChange={setIsHistoryOpen} className="pt-4 border-t border-primary/10">
-            <CollapsibleTrigger asChild>
-              <Button variant="ghost" size="sm" className="w-full flex items-center justify-between text-muted-foreground hover:text-primary transition-colors">
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest">
-                  <History className="size-3" /> Spark History
-                </div>
-                {isHistoryOpen ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-3 pt-4">
-              {historySparks.map((s) => (
-                <div key={s.id} className="p-3 rounded-lg bg-background/40 border border-primary/5 text-sm italic relative overflow-hidden group">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase">{s.sparkDate}</span>
-                    {s.mood && (
-                      <span className="text-[8px] font-black uppercase text-primary/40 tracking-tighter">Mood: {s.mood}</span>
-                    )}
+          {todaySpark && (
+            <div className="space-y-4">
+              {!todaySpark.imageUrl && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleVisualize} 
+                  disabled={isVisualizing}
+                  className="w-full border-dashed border-primary/30 hover:border-primary/60 transition-all duration-300 hover:bg-primary/5 hover:translate-y-[-2px]"
+                >
+                  {isVisualizing ? (
+                    <LoaderCircle className="animate-spin size-4 mr-2" />
+                  ) : (
+                    <ImageIcon className="size-4 mr-2" />
+                  )}
+                  Visualize this Spark
+                </Button>
+              )}
+              
+              {todaySpark.imageUrl && (
+                <div className="relative aspect-video rounded-xl overflow-hidden border border-primary/20 shadow-2xl group animate-in fade-in zoom-in-95 duration-700 preserve-3d hover:shadow-primary/20">
+                  <Image 
+                    src={todaySpark.imageUrl} 
+                    alt="Daily Spark Visualization" 
+                    fill 
+                    className="object-cover transition-transform duration-1000 group-hover:scale-110"
+                    data-ai-hint="whimsical spark"
+                  />
+                  
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 p-6 flex flex-col justify-end">
+                     <div className="flex items-center gap-2 text-xs text-white font-bold uppercase tracking-[0.2em] mb-2 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                        <Sparkles className="size-4 text-primary animate-pulse" /> Spark Vision
+                     </div>
+                     <p className="text-white/80 text-sm italic line-clamp-2 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 delay-75">
+                        {todaySpark.content}
+                     </p>
                   </div>
-                  <p className="text-muted-foreground group-hover:text-foreground transition-colors leading-snug">
-                    "{s.content}"
-                  </p>
+                  
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
+                  
+                  <Button 
+                     variant="ghost" 
+                     size="sm" 
+                     onClick={handleVisualize} 
+                     className="absolute top-2 right-2 h-7 px-2 text-[10px] bg-black/40 hover:bg-black/60 text-white border-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                     disabled={isVisualizing}
+                  >
+                    {isVisualizing ? 'Re-imagining...' : 'Re-imagine'}
+                  </Button>
                 </div>
-              ))}
-            </CollapsibleContent>
-          </Collapsible>
-        )}
-      </CardContent>
-    </Card>
+              )}
+            </div>
+          )}
+
+          {/* History Section */}
+          {historySparks.length > 0 && (
+            <Collapsible open={isHistoryOpen} onOpenChange={setIsHistoryOpen} className="pt-4 border-t border-primary/10">
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="sm" className="w-full flex items-center justify-between text-muted-foreground hover:text-primary transition-colors">
+                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest">
+                    <History className="size-3" /> Spark History
+                  </div>
+                  {isHistoryOpen ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-3 pt-4">
+                {historySparks.map((s) => (
+                  <div key={s.id} className="p-3 rounded-lg bg-background/40 border border-primary/5 text-sm italic relative overflow-hidden group hover:translate-x-1 transition-transform">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] font-bold text-muted-foreground uppercase">{s.sparkDate}</span>
+                      {s.mood && (
+                        <span className="text-[8px] font-black uppercase text-primary/40 tracking-tighter">Mood: {s.mood}</span>
+                      )}
+                    </div>
+                    <p className="text-muted-foreground group-hover:text-foreground transition-colors leading-snug">
+                      "{s.content}"
+                    </p>
+                  </div>
+                ))}
+              </CollapsibleContent>
+            </Collapsible>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }
