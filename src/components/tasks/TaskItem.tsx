@@ -1,3 +1,4 @@
+
 'use client';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -23,6 +24,34 @@ export function TaskItem({ task, onToggle, onDelete }: TaskItemProps) {
   const [showBreakdown, setShowBreakdown] = useState(false);
   const { user } = useUser();
   const firestore = useFirestore();
+
+  const playSuccessSound = () => {
+    if (typeof window === 'undefined') return;
+    try {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) return;
+      const audioCtx = new AudioContextClass();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(1200, audioCtx.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.2);
+      gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+      gainNode.gain.linearRampToValueAtTime(0.05, audioCtx.currentTime + 0.01);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.2);
+      oscillator.start();
+      oscillator.stop(audioCtx.currentTime + 0.2);
+    } catch (e) { /* silent */ }
+  };
+
+  const handleToggle = () => {
+    if (!task.isCompleted) {
+      playSuccessSound();
+    }
+    onToggle(task.id);
+  };
 
   const handleBreakdown = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -79,17 +108,11 @@ export function TaskItem({ task, onToggle, onDelete }: TaskItemProps) {
           }
         )}
       >
-        {task.isMainQuest && !task.isCompleted && (
-          <div className="absolute top-0 right-0 p-1">
-             <Trophy className="size-3 text-yellow-500/50" />
-          </div>
-        )}
-
         <Checkbox
           id={`task-${task.id}`}
           checked={task.isCompleted}
-          onCheckedChange={() => onToggle(task.id)}
-          className="size-5 rounded-full data-[state=checked]:bg-primary data-[state=checked]:border-primary transition-all duration-500 data-[state=checked]:scale-125 data-[state=checked]:rotate-y-180"
+          onCheckedChange={handleToggle}
+          className="size-5 rounded-full transition-all duration-500 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
           aria-label={`Mark task as ${task.isCompleted ? 'incomplete' : 'complete'}`}
         />
         <div className="flex-grow flex flex-col gap-1 overflow-hidden">
@@ -115,11 +138,6 @@ export function TaskItem({ task, onToggle, onDelete }: TaskItemProps) {
                    <Clock className="size-2" /> {task.duration}
                 </div>
              )}
-             {task.isWhimsical && (
-                <Badge variant="outline" className="text-[8px] h-3.5 px-1 uppercase font-black tracking-widest leading-none bg-accent/10 text-accent border-accent/20">
-                    Whimsy
-                </Badge>
-             )}
           </div>
         </div>
         
@@ -129,7 +147,6 @@ export function TaskItem({ task, onToggle, onDelete }: TaskItemProps) {
             size="icon"
             onClick={handleToggleWhimsy}
             className={cn("size-8 rounded-full transition-all hover:scale-125", task.isWhimsical ? "text-accent bg-accent/10" : "text-muted-foreground hover:bg-accent/10")}
-            title="Toggle Whimsy"
           >
             <Zap className={cn("size-4", task.isWhimsical && "fill-accent")} />
           </Button>
@@ -139,7 +156,6 @@ export function TaskItem({ task, onToggle, onDelete }: TaskItemProps) {
             onClick={handleBreakdown}
             disabled={isBreakingDown}
             className="size-8 rounded-full text-primary hover:bg-primary/10 transition-transform hover:scale-125"
-            title="AI Breakdown"
           >
             {isBreakingDown ? <LoaderCircle className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
           </Button>
@@ -148,7 +164,6 @@ export function TaskItem({ task, onToggle, onDelete }: TaskItemProps) {
             size="icon"
             onClick={handleDelete}
             className="size-8 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-transform hover:scale-125"
-            aria-label="Delete task"
           >
             <Trash2 className="size-4" />
           </Button>

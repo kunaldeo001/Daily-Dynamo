@@ -34,6 +34,14 @@ export interface DailyReflectionData {
   ownerId: string;
 }
 
+export interface DailySummaryData {
+  id: string;
+  summaryDate: string;
+  content: string;
+  createdAt: any;
+  ownerId: string;
+}
+
 export interface UserProfile {
   id: string;
   email: string;

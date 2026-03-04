@@ -1,7 +1,8 @@
+
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { Sparkles, LoaderCircle, Smile, Frown, Meh, Zap, Image as ImageIcon, History, ChevronDown, ChevronUp } from 'lucide-react';
+import { Sparkles, LoaderCircle, Smile, Frown, Meh, Zap, Image as ImageIcon, History, ChevronDown, ChevronUp, RefreshCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { aiDailySpark } from '@/ai/flows/ai-daily-spark-flow';
@@ -29,6 +30,8 @@ export function DailySpark() {
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [todayStr, setTodayStr] = useState<string | null>(null);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isFlipped, setIsFlipped] = useState(false);
+  
   const { user } = useUser();
   const firestore = useFirebase().firestore;
   const { toast } = useToast();
@@ -96,7 +99,8 @@ export function DailySpark() {
     }
   };
 
-  const handleVisualize = async () => {
+  const handleVisualize = async (e?: React.MouseEvent) => {
+    e?.stopPropagation();
     if (!todaySpark || !user || !firestore) return;
     setIsVisualizing(true);
     try {
@@ -165,92 +169,89 @@ export function DailySpark() {
               {isLoading ? (
                 <LoaderCircle className="animate-spin h-4 w-4" />
               ) : (
-                <Zap className="mr-2 size-4" />
+                <RefreshCcw className="mr-2 size-4" />
               )}
               {todaySpark ? 'Regenerate' : 'Ignite'}
             </Button>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className={cn(
-            "text-center text-lg min-h-[8rem] flex flex-col items-center justify-center p-8 rounded-2xl border transition-all duration-500 relative overflow-hidden preserve-3d group-hover/spark:translate-z-20 group-hover/spark:shadow-xl",
-            currentMoodInfo?.bg || "bg-primary/5",
-            currentMoodInfo ? `border-${currentMoodInfo.color.split('-')[1]}/20` : "border-primary/10"
-          )}>
-            {isLoading ? (
-              <LoaderCircle className="animate-spin text-primary size-10" />
-            ) : todaySpark ? (
-              <div className="animate-in zoom-in-95 duration-500 space-y-4">
-                <p className="italic font-medium leading-relaxed text-2xl text-foreground drop-shadow-sm">
-                  "{todaySpark.content}"
-                </p>
-                {todaySpark.mood && (
-                  <div className={cn("text-[10px] uppercase tracking-[0.3em] font-black", currentMoodInfo?.color || "text-primary/60")}>
-                    Tailored for your {todaySpark.mood} vibe
+          <div className="relative perspective-1000 min-h-[12rem]">
+            <div 
+              className={cn(
+                "relative w-full h-full transition-all duration-700 preserve-3d cursor-pointer",
+                isFlipped && "rotate-y-180"
+              )}
+              onClick={() => todaySpark?.imageUrl && setIsFlipped(!isFlipped)}
+            >
+              {/* Front Side */}
+              <div className={cn(
+                "absolute inset-0 backface-hidden flex flex-col items-center justify-center p-8 rounded-2xl border transition-all duration-500 overflow-hidden",
+                currentMoodInfo?.bg || "bg-primary/5",
+                currentMoodInfo ? `border-${currentMoodInfo.color.split('-')[1]}/20` : "border-primary/10"
+              )}>
+                {isLoading ? (
+                  <LoaderCircle className="animate-spin text-primary size-10" />
+                ) : todaySpark ? (
+                  <div className="animate-in zoom-in-95 duration-500 space-y-4 text-center">
+                    <p className="italic font-medium leading-relaxed text-2xl text-foreground drop-shadow-sm">
+                      "{todaySpark.content}"
+                    </p>
+                    {todaySpark.mood && (
+                      <div className={cn("text-[10px] uppercase tracking-[0.3em] font-black", currentMoodInfo?.color || "text-primary/60")}>
+                        Tailored for your {todaySpark.mood} vibe
+                      </div>
+                    )}
+                    {todaySpark.imageUrl && (
+                      <div className="text-[9px] font-bold text-primary/40 uppercase tracking-widest mt-4 animate-pulse">
+                        Click to Flip for Spark Vision
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-muted-foreground font-normal text-center space-y-3">
+                    <p className="text-xl">How's your vibe today?</p>
+                    <p className="text-sm opacity-60">Select a mood above and ignite your daily spark!</p>
                   </div>
                 )}
+                <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
               </div>
-            ) : (
-              <div className="text-muted-foreground font-normal text-center space-y-3">
-                <p className="text-xl">How's your vibe today?</p>
-                <p className="text-sm opacity-60">Select a mood above and ignite your daily spark!</p>
-              </div>
-            )}
-            <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
-          </div>
 
-          {todaySpark && (
-            <div className="space-y-4 preserve-3d group-hover/spark:translate-z-30">
-              {!todaySpark.imageUrl && (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleVisualize} 
-                  disabled={isVisualizing}
-                  className="w-full border-dashed border-primary/30 hover:border-primary/60 transition-all duration-300 hover:bg-primary/5 hover:translate-y-[-4px] active:translate-y-0"
-                >
-                  {isVisualizing ? (
-                    <LoaderCircle className="animate-spin size-4 mr-2" />
-                  ) : (
-                    <ImageIcon className="size-4 mr-2" />
-                  )}
-                  Visualize this Spark in 3D
-                </Button>
-              )}
-              
-              {todaySpark.imageUrl && (
-                <div className="relative aspect-video rounded-2xl overflow-hidden border border-primary/20 shadow-2xl group/img animate-in fade-in zoom-in-95 duration-1000 preserve-3d hover:shadow-primary/30">
-                  <Image 
+              {/* Back Side (Image) */}
+              {todaySpark?.imageUrl && (
+                <div className="absolute inset-0 backface-hidden rotate-y-180 rounded-2xl overflow-hidden border border-primary/20 shadow-2xl">
+                   <Image 
                     src={todaySpark.imageUrl} 
                     alt="Daily Spark Visualization" 
                     fill 
-                    className="object-cover transition-transform duration-1000 group-hover/img:scale-110"
+                    className="object-cover"
                     data-ai-hint="whimsical spark"
                   />
-                  
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover/img:opacity-100 transition-all duration-700 p-8 flex flex-col justify-end">
-                     <div className="flex items-center gap-2 text-xs text-white font-black uppercase tracking-[0.4em] mb-3 transform translate-y-6 group-hover/img:translate-y-0 transition-transform duration-700">
-                        <Sparkles className="size-5 text-primary animate-pulse" /> Spark Vision 3D
-                     </div>
-                     <p className="text-white/90 text-sm italic line-clamp-2 transform translate-y-6 group-hover/img:translate-y-0 transition-transform duration-700 delay-100">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent p-6 flex flex-col justify-end">
+                     <p className="text-white text-sm font-bold italic line-clamp-2">
                         {todaySpark.content}
                      </p>
                   </div>
-                  
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
-                  
-                  <Button 
-                     variant="ghost" 
-                     size="sm" 
-                     onClick={handleVisualize} 
-                     className="absolute top-4 right-4 h-8 px-3 text-[10px] font-bold tracking-widest bg-black/50 hover:bg-black/80 text-white border border-white/10 opacity-0 group-hover/img:opacity-100 transition-opacity duration-300 backdrop-blur-md"
-                     disabled={isVisualizing}
-                  >
-                    {isVisualizing ? 'Re-imagining...' : 'Re-imagine'}
-                  </Button>
                 </div>
               )}
             </div>
+          </div>
+
+          {todaySpark && !todaySpark.imageUrl && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleVisualize} 
+              disabled={isVisualizing}
+              className="w-full border-dashed border-primary/30 hover:border-primary/60 transition-all duration-300 hover:bg-primary/5 hover:translate-y-[-4px]"
+            >
+              {isVisualizing ? (
+                <LoaderCircle className="animate-spin size-4 mr-2" />
+              ) : (
+                <ImageIcon className="size-4 mr-2" />
+              )}
+              Visualize this Spark
+            </Button>
           )}
 
           {/* History Section */}
