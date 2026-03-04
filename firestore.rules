@@ -5,7 +5,7 @@
  * public data or cross-user data sharing.
  *
  * Data Structure: The data is organized hierarchically. All user-specific
- * data (Tasks, DailySparks) is nested within a user's document in the top-level
+ * data (Tasks, DailySparks, Summaries) is nested within a user's document in the top-level
  * 'users' collection (e.g., /users/{userId}/tasks/{taskId}). This structure
  * simplifies ownership-based security rules.
  *
@@ -132,6 +132,20 @@ service cloud.firestore {
      * @principle Enforces document ownership and validates relational integrity via a denormalized `ownerId` field.
      */
     match /users/{userId}/reflections/{reflectionId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && hasValidOwnerOnCreate(userId);
+      allow update: if isExistingOwner(userId) && isOwnerImmutable();
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Secures a user's private collection of daily summaries (wrap-ups).
+     * @path /users/{userId}/summaries/{summaryId}
+     * @allow (list) The owner of the user path can list all summaries in their own collection.
+     * @principle Enforces document ownership and validates relational integrity via a denormalized `ownerId` field.
+     */
+    match /users/{userId}/summaries/{summaryId} {
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
       allow create: if isOwner(userId) && hasValidOwnerOnCreate(userId);
