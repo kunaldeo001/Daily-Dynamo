@@ -43,31 +43,9 @@ Daily Dynamo is a whimsical and interactive 3D day planner designed to spark joy
 npm run dev
 ```
 
-## 🐙 How to Commit & Push to GitHub
 
-If you are using the terminal, run these commands:
-
-1. **Initialize Git** (if not already done):
-   ```bash
-   git init
-   ```
-2. **Stage your changes**:
-   ```bash
-   git add .
-   ```
-3. **Commit your changes**:
-   ```bash
-   git commit -m "feat: initial release of Daily Dynamo with 3D UI and AI features"
-   ```
-4. **Link to your GitHub repo**:
-   ```bash
-   git remote add origin https://github.com/yourusername/daily-dynamo.git
-   ```
-5. **Push to the main branch**:
-   ```bash
-   git push -u origin main
-   ```
 
 ---
 
 *Stay Sparky!*
+
