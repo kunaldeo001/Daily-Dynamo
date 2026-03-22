@@ -38,7 +38,7 @@ Daily Dynamo is a whimsical and interactive 3D day planner designed to spark joy
    GOOGLE_GENAI_API_KEY=your_api_key_here
    ```
 
-### Running Locally
+#### Running Locally
 ```bash
 npm run dev
 ```
