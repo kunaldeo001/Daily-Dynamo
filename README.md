@@ -22,7 +22,7 @@ Daily Dynamo is a whimsical and interactive 3D day planner designed to spark joy
 
 ## 📦 Getting Started
 
-### Prerequisites
+## Prerequisites
 - Node.js installed
 - A [Google AI Studio API Key](https://aistudio.google.com/)
 
